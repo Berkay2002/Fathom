@@ -1,7 +1,9 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { createDeepAgent } from "deepagents";
 import { MemorySaver } from "@langchain/langgraph";
-import { ExaSearchRetriever } from "@langchain/exa";
+import { ExaRetriever } from "@langchain/exa";
+import Exa from "exa-js";
+import { Document } from "@langchain/core/documents";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 
@@ -62,15 +64,17 @@ const exaSearchTool = tool(
     }
 
     try {
-      const retriever = new ExaSearchRetriever({
-        apiKey,
-        k: numResults,
-        highlights: true,
+      const retriever = new ExaRetriever({
+        client: new Exa(apiKey),
+        searchArgs: {
+          numResults,
+          highlights: true,
+        },
       });
 
       const docs = await retriever.invoke(query);
       return JSON.stringify(
-        docs.map((doc) => ({
+        docs.map((doc: Document) => ({
           title: doc.metadata.title,
           url: doc.metadata.url,
           highlights: doc.metadata.highlights,
